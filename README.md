@@ -26,3 +26,5 @@ TEST :
 >> INPUT : 1 Image once
 
 >> OUTPUT : Which region with top, left position, width, height contains DOG, CAT...
+
+### 3. AP, mAP, IOU metric
