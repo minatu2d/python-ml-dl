@@ -80,3 +80,20 @@ Như đã nói ở trên, việc này dựa vào thay đổi tham số( hay gọ
 
 Phải làm gì nếu chúng ta không thấy thoả mãn (happy) với hiệu năng hiện tại. Chúng ta có thể yêu cầu hệ thống lấy ra nhiều kết quả hơn ( ví dụ điều chỉnh ngưỡng để dễ chấp nhận một ảnh là máy bay hơn).  Điều này sẽ giảm nhẹ mức độ của ngưỡng để coi một ảnh là máy bay. Chúng ta cũng có thể yêu cầu hệ thống phải cứng rắn hơn, trả về ít hơn nhưng chính xác hơn chẳng hạn. 
 Trong ví dụ sau đây
+
+Trong ví dụ sau đây, hệ thống trả về 4 lần tương ứng với một ngưỡng cụ thể nào đó ( miêu tả bằng đường kẻ màu xanh). Hệ thống sẽ trả về những ảnh mà giống máy bay hơn hoặc bằng ngưỡng đó. Ngưỡng ở đây có thể coi như độ giống đi.
+Chúng ta có thể di chuyển lên xuống để có được những tập kết quả khác nhau được trả về.
+
+Tương ứng với đó, ở mỗi vị trí của ngưỡng, ta sẽ thu được giá trị khác nhau của Precision  ( số đo độ chính xác ) và Recall (số đo độ triệu hồi). 
+Cụ thể hơn, nếu chúng ta điều chỉnh ngưỡng để chỉ lấy ảnh trên cùng, ta sẽ có Precision là 100%, và Recall là 20%. Nếu chúng ta lấy điều chỉnh ngưỡng để chỉ lấy 2 anh trên cùng, Precision sẽ là 100%, và Recall đã lên đến 40% rồi. 
+Bảng sau sẽ chỉ ra quan hệ giữa Precision và Recall tại các ngưỡng khác nhau.
+
+# Đường cong Precision - Recall ( Đường cong của số đo độ chính xác và độ triệu hồi)
+
+Một cách rất hay để miêu tả hiệu năng của một bộ phân lớp là xem xét sự thay đổi của Precision và Recall khi thay đổi ngưỡng. Một bộ phân lớp tốt (hay không Ngáo) sẽ xếp hạng các thực sự là máy bay ở phía trên của danh sách khi chọn ngưỡng. Nó cũng có khả năng lấy rất nhiều ảnh của máy bay trước có trong hệ thống. Hay nói cách khác Precision nằm ở mức cao khi Recall tăng. Một bộ phân lớp tồi ( hay Ngáo) sẽ ăn đạn ( giảm ) Precision khi có Recall cao. Thông thường, các nghiên cứu sẽ trình bày đường cong Precision-Recall để đưa ra mặt cân bằng cho bộ phân lớp của họ.
+
+Dưới đây là một đồ thì giữa Precision và Recall.
+
+# Số đo độ chính xác trung bình
+Đánh giá trên một đường cong vẫn tương đối khó hiểu. Một con số có thể đánh giá đặc trực hiệu năng hệ thống chắc chắn sẽ dễ hiểu hơn nhiều.
+
