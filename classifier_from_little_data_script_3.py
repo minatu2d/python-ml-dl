@@ -41,6 +41,10 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import optimizers
 from keras.models import Sequential
 from keras.layers import Dropout, Flatten, Dense
+from keras import backend as K
+
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # path to the model weights files.
@@ -49,15 +53,27 @@ top_model_weights_path = 'fc_model.h5'
 # dimensions of our images.
 img_width, img_height = 150, 150
 
-train_data_dir = 'cats_and_dogs_small/train'
-validation_data_dir = 'cats_and_dogs_small/validation'
+PRE_TRAINED_NET="VGG16_"
+
+base_dir = '/home/tupv/work/data/'
+
+train_data_dir = base_dir+ 'train'
+validation_data_dir = base_dir + 'validation'
 nb_train_samples = 2000
 nb_validation_samples = 800
 epochs = 50
 batch_size = 16
 
+
+if K.image_data_format() == 'channels_first':
+    input_shape = (3, img_width, img_height)
+else:
+    input_shape = (img_width, img_height, 3)
+
 # build the VGG16 network
-model = applications.VGG16(weights='imagenet', include_top=False)
+model = applications.VGG16(weights='imagenet', include_top=False, input_shape=input_shape)
+model.summary()
+print(model.output_shape)
 print('Model loaded.')
 
 # build a classifier model to put on top of the convolutional model
@@ -72,26 +88,33 @@ top_model.add(Dense(1, activation='sigmoid'))
 # in order to successfully do fine-tuning
 top_model.load_weights(top_model_weights_path)
 
+# Combine VGG parts and fc layers into 1 Model
+new_model = Sequential()
+for layer in model.layers:
+    new_model.add(layer)
+
 # add the model on top of the convolutional base
-model.add(top_model)
+# model.add(top_model)
+new_model.add(top_model)
 
 # set the first 25 layers (up to the last conv block)
 # to non-trainable (weights will not be updated)
-for layer in model.layers[:25]:
+for layer in new_model.layers[:25]:
     layer.trainable = False
 
 # compile the model with a SGD/momentum optimizer
 # and a very slow learning rate.
-model.compile(loss='binary_crossentropy',
+new_model.compile(loss='binary_crossentropy',
               optimizer=optimizers.SGD(lr=1e-4, momentum=0.9),
               metrics=['accuracy'])
 
 # prepare data augmentation configuration
 train_datagen = ImageDataGenerator(
     rescale=1. / 255,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True)
+    #shear_range=0.2,
+    #zoom_range=0.2,
+    #horizontal_flip=True
+    )
 
 test_datagen = ImageDataGenerator(rescale=1. / 255)
 
@@ -108,7 +131,7 @@ validation_generator = test_datagen.flow_from_directory(
     class_mode='binary')
 
 # fine-tune the model
-history = model.fit_generator(
+history = new_model.fit_generator(
     train_generator,
     samples_per_epoch=nb_train_samples,
     epochs=epochs,
@@ -124,7 +147,8 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+plt.savefig("third_try_accuracy.png")
+#plt.show()
 # summarize history for loss
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
@@ -132,4 +156,5 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+plt.savefig("third_try_loss.png")
+#plt.show()

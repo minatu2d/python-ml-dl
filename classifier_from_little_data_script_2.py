@@ -41,17 +41,24 @@ from keras.models import Sequential
 from keras.layers import Dropout, Flatten, Dense
 from keras import applications
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # dimensions of our images.
 img_width, img_height = 150, 150
 
-top_model_weights_path = 'bottleneck_fc_model.h5'
-train_data_dir = 'data/train'
-validation_data_dir = 'data/validation'
+PRE_TRAINED_NET="VGG16_"
+
+top_model_weights_path = PRE_TRAINED_NET + 'bottleneck_fc_model.h5'
+
+base_dir = '/home/tupv/work/data/'
+
+train_data_dir = base_dir+ 'train'
+validation_data_dir = base_dir + 'validation'
 nb_train_samples = 2000
 nb_validation_samples = 800
-epochs = 50
+epochs = 20
 batch_size = 16
 
 
@@ -69,7 +76,7 @@ def save_bottlebeck_features():
         shuffle=False)
     bottleneck_features_train = model.predict_generator(
         generator, nb_train_samples // batch_size)
-    np.save(open('bottleneck_features_train.npy', 'w'),
+    np.save(open(PRE_TRAINED_NET+'bottleneck_features_train.npy', 'wb'),
             bottleneck_features_train)
 
     generator = datagen.flow_from_directory(
@@ -80,18 +87,18 @@ def save_bottlebeck_features():
         shuffle=False)
     bottleneck_features_validation = model.predict_generator(
         generator, nb_validation_samples // batch_size)
-    np.save(open('bottleneck_features_validation.npy', 'w'),
+    np.save(open(PRE_TRAINED_NET+'bottleneck_features_validation.npy', 'wb'),
             bottleneck_features_validation)
 
 
 def train_top_model():
-    train_data = np.load(open('bottleneck_features_train.npy'))
+    train_data = np.load(open(PRE_TRAINED_NET + 'bottleneck_features_train.npy','rb'))
     train_labels = np.array(
-        [0] * (nb_train_samples / 2) + [1] * (nb_train_samples / 2))
+        [0] * (nb_train_samples // 2) + [1] * (nb_train_samples // 2))
 
-    validation_data = np.load(open('bottleneck_features_validation.npy'))
+    validation_data = np.load(open(PRE_TRAINED_NET + 'bottleneck_features_validation.npy','rb'))
     validation_labels = np.array(
-        [0] * (nb_validation_samples / 2) + [1] * (nb_validation_samples / 2))
+        [0] * (nb_validation_samples // 2) + [1] * (nb_validation_samples // 2))
 
     model = Sequential()
     model.add(Flatten(input_shape=train_data.shape[1:]))
@@ -106,7 +113,8 @@ def train_top_model():
               epochs=epochs,
               batch_size=batch_size,
               validation_data=(validation_data, validation_labels))
-    
+    # Save models
+    model.save_weights(top_model_weights_path)
     # list all data in history
     print(history.history.keys())
     # summarize history for accuracy
@@ -117,6 +125,7 @@ def train_top_model():
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
+    plt.savefig("second_try_accuracy.png")
     # summarize history for loss
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
@@ -125,9 +134,9 @@ def train_top_model():
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
-    
-    model.save_weights(top_model_weights_path)
+    plt.savefig("second_try_loss.png")
+    #model.save_weights(top_model_weights_path)
 
 
-save_bottlebeck_features()
+#save_bottlebeck_features()
 train_top_model()

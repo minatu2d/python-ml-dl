@@ -41,13 +41,16 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
+
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
 # dimensions of our images.
 img_width, img_height = 150, 150
 
-base_dir = '/home/minatu2d/ml_dl/data/all/subset/'
+base_dir = '/home/tupv/work/data/'
 
 train_data_dir = base_dir+ 'train'
 validation_data_dir = base_dir + 'validation'
@@ -115,6 +118,8 @@ history = model.fit_generator(
     validation_data=validation_generator,
     validation_steps=nb_validation_samples // batch_size)
 
+model.save_weights('first_try.h5')
+
 # list all data in history
 print(history.history.keys())
 # summarize history for accuracy
@@ -125,6 +130,7 @@ plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.show()
+plt.savefig("first_try_accuracy.png")
 # summarize history for loss
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
@@ -133,6 +139,5 @@ plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.show()
+plt.savefig("first_try_loss.png")
 
-
-model.save_weights('first_try.h5')
