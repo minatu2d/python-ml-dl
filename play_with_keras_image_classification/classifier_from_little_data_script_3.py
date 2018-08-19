@@ -48,8 +48,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # path to the model weights files.
-weights_path = '../keras/examples/vgg16_weights.h5'
-top_model_weights_path = 'fc_model.h5'
+weights_path = 'vgg16_weights.h5'
+top_model_weights_path = 'VGG16_bottleneck_fc_model.h5'
 # dimensions of our images.
 img_width, img_height = 150, 150
 
@@ -61,8 +61,8 @@ train_data_dir = base_dir+ 'train'
 validation_data_dir = base_dir + 'validation'
 nb_train_samples = 2000
 nb_validation_samples = 800
-epochs = 50
-batch_size = 16
+epochs = 2
+batch_size = 32
 
 
 if K.image_data_format() == 'channels_first':
@@ -72,6 +72,7 @@ else:
 
 # build the VGG16 network
 model = applications.VGG16(weights='imagenet', include_top=False, input_shape=input_shape)
+print("Number layer :",len(model.layers))
 model.summary()
 print(model.output_shape)
 print('Model loaded.')
@@ -82,11 +83,13 @@ top_model.add(Flatten(input_shape=model.output_shape[1:]))
 top_model.add(Dense(256, activation='relu'))
 top_model.add(Dropout(0.5))
 top_model.add(Dense(1, activation='sigmoid'))
+print("Number layer :",len(top_model.layers))
+top_model.summary()
 
 # note that it is necessary to start with a fully-trained
 # classifier, including the top classifier,
 # in order to successfully do fine-tuning
-# top_model.load_weights(top_model_weights_path)
+top_model.load_weights(top_model_weights_path)
 
 # Combine VGG parts and fc layers into 1 Model
 new_model = Sequential()
@@ -96,10 +99,13 @@ for layer in model.layers:
 # add the model on top of the convolutional base
 # model.add(top_model)
 new_model.add(top_model)
+print("Number layer :",len(new_model.layers))
+new_model.summary()
 
 # set the first 25 layers (up to the last conv block)
 # to non-trainable (weights will not be updated)
-for layer in new_model.layers[:25]:
+for layer in new_model.layers[:15]:
+    print(layer.name,": not trainable")
     layer.trainable = False
 
 # compile the model with a SGD/momentum optimizer
@@ -138,9 +144,32 @@ history = new_model.fit_generator(
     validation_data=validation_generator,
     nb_val_samples=nb_validation_samples)
 
+
+# Grad-CAM
+from keras.preprocessing import image
+import sys
+import cv2
+import numpy as np
+from keras.preprocessing.image import load_img, img_to_array
+import grad_cam
+
+
+preprocessed_input = grad_cam.load_image(sys.argv[1], (150, 150))
+#preprocessed_input = load_image("./examples/boat.jpg")
+predictions = new_model.predict(preprocessed_input)
+predicted_class = np.argmax(predictions)
+#top_1 = VGG16.decode_predictions(predictions)[0][0]
+print('Predicted class:',predicted_class)
+#print('(%s) with probability ' % (["cat","dog"][predicted_class[0]]))
+
+cam, heatmap = grad_cam.grad_cam(new_model,preprocessed_input, 
+        predicted_class, "block5_conv3", (150,150))
+cv2.imwrite("gradcam.jpg", cam)
+
 # list all data in history
 print(history.history.keys())
 # summarize history for accuracy
+plt.figure()
 plt.plot(history.history['acc'])
 plt.plot(history.history['val_acc'])
 plt.title('model accuracy')
@@ -148,8 +177,9 @@ plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.savefig("third_try_accuracy.png")
-#plt.show()
+plt.show()
 # summarize history for loss
+plt.figure()
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
 plt.title('model loss')
@@ -157,4 +187,4 @@ plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.savefig("third_try_loss.png")
-#plt.show()
+plt.show()

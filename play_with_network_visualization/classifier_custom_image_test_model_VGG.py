@@ -2,7 +2,6 @@ from keras.models import load_model
 from keras.preprocessing.image import load_img, img_to_array
 import sys
 import numpy as np
-from keras.applications.inception_v3 import preprocess_input
 
 weight_file =  sys.argv[1]
 img_file = sys.argv[2]
@@ -13,7 +12,7 @@ print("Weight file :{0}".format(weight_file))
 model = load_model(weight_file)
 #for layer in model.layers:
 #    print(layer.name)
-#model.summary()
+model.summary()
 
 # Load image
 img = load_img(img_file, target_size=(224, 224))    # 画像ファイルの読み込み
@@ -21,9 +20,6 @@ img_array = img_to_array(img) / 255                                     #
 img_list = []
 img_list.append(img_array)
 pre_proc_img = np.array(img_list)
-#x = img_to_array(img)
-#x = np.expand_dims(x, axis=0)
-#x = preprocess_input(x)
 pred = model.predict(pre_proc_img)
 print(pred)
 
@@ -33,6 +29,11 @@ import cv2
 import numpy as np
 from keras.preprocessing.image import load_img, img_to_array
 import grad_cam
+from keras.applications.vgg16 import preprocess_input
+
+#x = img_to_array(img)
+#x = np.expand_dims(x, axis=0)
+#x = preprocess_input(x)
 
 predicted_class = np.argmax(pred)
 print('Predicted class:',["cat", "dog"][predicted_class])
@@ -62,10 +63,10 @@ print('Predicted class:',["cat", "dog"][predicted_class])
 #cv2.imwrite("InceptionV3_gradcam_conv2d_3.jpg", cam)
 
 
-for layer_id in reversed(range(len(model.layers))):
-    name = model.layers[layer_id].name
-    if (name.startswith("conv2d_")):
+for layer in model.layers:
+    if ("conv" in layer.name):
+        name = layer.name
         cam, heatmap = grad_cam.grad_cam(model,pre_proc_img,
                 predicted_class,name, (224,224))
-        cv2.imwrite("InceptionV3_gradcam_{0}.jpg".format(name), cam)
-        cv2.imwrite("InceptionV3_heatmap_{0}.jpg".format(name), heatmap)
+        cv2.imwrite("VGG16_gradcam_{0}.jpg".format(name), cam)
+        cv2.imwrite("VGG16_heatmap_{0}.jpg".format(name), heatmap * 255)

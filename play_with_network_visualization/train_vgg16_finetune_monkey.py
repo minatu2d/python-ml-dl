@@ -1,4 +1,5 @@
 from keras.applications.inception_v3 import InceptionV3
+from keras.applications import VGG16
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
@@ -11,16 +12,18 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 img_width, img_height = 224, 224
-PRE_TRAINED_NET="InceptionV3_"
+PRE_TRAINED_NET="VGG16"
+DATASET="MONKEY"
 
-base_dir = '/home/tupv/work/data/'
+base_dir = '/home/tupv/work/data/10_monkey_species/'
 
-train_data_dir = base_dir+ 'train'
+train_data_dir = base_dir+ 'training'
 validation_data_dir = base_dir + 'validation'
-nb_train_samples = 2000
-nb_validation_samples = 800
-epochs = 5
-batch_size = 64
+nb_train_samples = 1360
+nb_validation_samples = 272
+epochs = 50
+batch_size = 16
+n_class = 10
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -53,7 +56,8 @@ validation_generator = test_datagen.flow_from_directory(
 
 
 # create the base pre-trained model
-base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=input_shape)
+#base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=input_shape)
+base_model = VGG16(weights='imagenet', include_top=False, input_shape=input_shape)
 
 # add a global spatial average pooling layer
 x = base_model.output
@@ -61,7 +65,7 @@ x = GlobalAveragePooling2D()(x)
 # let's add a fully-connected layer
 x = Dense(1024, activation='relu')(x)
 # and a logistic layer -- let's say we have 200 classes
-predictions = Dense(2, activation='softmax')(x)
+predictions = Dense(n_class, activation='softmax')(x)
 
 # this is the model we will train
 model = Model(inputs=base_model.input, outputs=predictions)
@@ -73,6 +77,7 @@ for layer in base_model.layers:
 
 # compile the model (should be done *after* setting layers to non-trainable)
 model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+print("N layers :",len(model.layers))
 model.summary()
 
 # train the model on the new data for a few epochs
@@ -95,7 +100,7 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig("third_try_accuracy_for_CNN.png")
+plt.savefig("{0}_{1}_finetune_fewlayers_accracy.png".format(PRE_TRAINED_NET, DATASET))
 plt.show()
 # summarize history for loss
 plt.figure()
@@ -105,7 +110,7 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig("third_try_loss_for_CNN.png")
+plt.savefig("{0}_{1}_finetune_fewlayers_loss.png".format(PRE_TRAINED_NET, DATASET))
 plt.show()
 
 # at this point, the top layers are well trained and we can start fine-tuning
@@ -119,10 +124,12 @@ for i, layer in enumerate(base_model.layers):
 
 # we chose to train the top 2 inception blocks, i.e. we will freeze
 # the first 249 layers and unfreeze the rest:
-for layer in model.layers[:249]:
-   layer.trainable = False
-for layer in model.layers[249:]:
-  layer.trainable = True
+for layer in model.layers[:17]:
+    print(layer.name,"not trainable")
+    layer.trainable = False
+for layer in model.layers[17:]:
+    print(layer.name,"trainable")
+    layer.trainable = True
 
 # we need to recompile the model for these modifications to take effect
 # we use SGD with a low learning rate
@@ -133,7 +140,7 @@ model.summary()
 
 # we train our model again (this time fine-tuning the top 2 inception blocks
 # alongside the top Dense layers
-best_val_acc_weight = '{0}weight_best.hdf5'.format(PRE_TRAINED_NET)
+best_val_acc_weight = '{0}_{1}_weight_best.hdf5'.format(PRE_TRAINED_NET, DATASET)
 checkpoint = ModelCheckpoint(best_val_acc_weight, monitor='val_acc', verbose=1, save_best_only=True,
         mode='max')
 history = model.fit_generator(
@@ -155,7 +162,7 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig("third_try_accuracy.png")
+plt.savefig("{0}_{1}_finetune_accracy.png".format(PRE_TRAINED_NET, DATASET))
 plt.show()
 
 # summarize history for loss
@@ -166,5 +173,5 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig("third_try_loss.png")
+plt.savefig("{0}_{1}_finetune_loss.png".format(PRE_TRAINED_NET, DATASET))
 plt.show()

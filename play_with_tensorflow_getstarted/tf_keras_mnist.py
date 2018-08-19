@@ -1,3 +1,6 @@
+#######################################################
+# Original link: https://www.tensorflow.org/tutorials/
+########################################################
 import tensorflow as tf
 mnist = tf.keras.datasets.mnist
 

@@ -1,4 +1,5 @@
 from keras.applications.inception_v3 import InceptionV3
+from keras.applications import VGG16
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
@@ -11,7 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 img_width, img_height = 224, 224
-PRE_TRAINED_NET="InceptionV3_"
+PRE_TRAINED_NET="VGG16_"
 
 base_dir = '/home/tupv/work/data/'
 
@@ -53,7 +54,8 @@ validation_generator = test_datagen.flow_from_directory(
 
 
 # create the base pre-trained model
-base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=input_shape)
+#base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=input_shape)
+base_model = VGG16(weights='imagenet', include_top=False, input_shape=input_shape)
 
 # add a global spatial average pooling layer
 x = base_model.output
@@ -73,6 +75,7 @@ for layer in base_model.layers:
 
 # compile the model (should be done *after* setting layers to non-trainable)
 model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+print("N layers :",len(model.layers))
 model.summary()
 
 # train the model on the new data for a few epochs
@@ -119,10 +122,12 @@ for i, layer in enumerate(base_model.layers):
 
 # we chose to train the top 2 inception blocks, i.e. we will freeze
 # the first 249 layers and unfreeze the rest:
-for layer in model.layers[:249]:
-   layer.trainable = False
-for layer in model.layers[249:]:
-  layer.trainable = True
+for layer in model.layers[:17]:
+    print(layer.name,"not trainable")
+    layer.trainable = False
+for layer in model.layers[17:]:
+    print(layer.name,"trainable")
+    layer.trainable = True
 
 # we need to recompile the model for these modifications to take effect
 # we use SGD with a low learning rate

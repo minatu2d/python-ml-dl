@@ -100,43 +100,56 @@ def train_top_model():
     validation_labels = np.array(
         [0] * (nb_validation_samples // 2) + [1] * (nb_validation_samples // 2))
 
-    model = Sequential()
-    model.add(Flatten(input_shape=train_data.shape[1:]))
-    model.add(Dense(256, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(1, activation='sigmoid'))
+    x_train = train_data.reshape(train_data.shape[0],-1)
+    y_train = train_labels
+    x_test = validation_data.reshape(validation_data.shape[0],-1)
+    y_test = validation_labels
+    print("X train :",x_train.shape)
+    print("Y train :",y_train.shape)
+    print("X test :",x_test.shape)
+    print("Y test :",y_test.shape)
+    from sklearn.svm import SVC
+    clf = SVC(verbose=True)
+    clf.fit(x_train, y_train)
+    score = clf.score(x_test, y_test)
+    print("Score :{0}".format(score))
+#    model = Sequential()
+#    model.add(Flatten(input_shape=train_data.shape[1:]))
+#    model.add(Dense(256, activation='relu'))
+#    model.add(Dropout(0.5))
+#    model.add(Dense(1, activation='sigmoid'))
+#
+#    model.compile(optimizer='rmsprop',
+#                  loss='binary_crossentropy', metrics=['accuracy'])
+#
+#    history = model.fit(train_data, train_labels,
+#              epochs=epochs,
+#              batch_size=batch_size,
+#              validation_data=(validation_data, validation_labels))
+#    # Save models
+#    model.save_weights(top_model_weights_path)
+#    # list all data in history
+#    print(history.history.keys())
+#    # summarize history for accuracy
+#    plt.plot(history.history['acc'])
+#    plt.plot(history.history['val_acc'])
+#    plt.title('model accuracy')
+#    plt.ylabel('accuracy')
+#    plt.xlabel('epoch')
+#    plt.legend(['train', 'test'], loc='upper left')
+#    plt.show()
+#    plt.savefig("second_try_accuracy.png")
+#    # summarize history for loss
+#    plt.plot(history.history['loss'])
+#    plt.plot(history.history['val_loss'])
+#    plt.title('model loss')
+#    plt.ylabel('loss')
+#    plt.xlabel('epoch')
+#    plt.legend(['train', 'test'], loc='upper left')
+#    plt.show()
+#    plt.savefig("second_try_loss.png")
+#    #model.save_weights(top_model_weights_path)
 
-    model.compile(optimizer='rmsprop',
-                  loss='binary_crossentropy', metrics=['accuracy'])
 
-    history = model.fit(train_data, train_labels,
-              epochs=epochs,
-              batch_size=batch_size,
-              validation_data=(validation_data, validation_labels))
-    # Save models
-    model.save_weights(top_model_weights_path)
-    # list all data in history
-    print(history.history.keys())
-    # summarize history for accuracy
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
-    plt.savefig("second_try_accuracy.png")
-    # summarize history for loss
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
-    plt.savefig("second_try_loss.png")
-    #model.save_weights(top_model_weights_path)
-
-
-save_bottlebeck_features()
+#save_bottlebeck_features()
 train_top_model()
